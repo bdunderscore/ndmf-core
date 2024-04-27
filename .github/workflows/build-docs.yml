@@ -1,0 +1,58 @@
+name: Build documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+  
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+  
+      - name: Install docfx
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install dotnet7
+          dotnet tool update -g docfx
+          
+      - name: Build documentation
+        run: |
+          docfx docfx~/docfx.json
+            
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docs
+          path: docfx~/_site
+        
+  publish-docs:
+    if: github.ref == 'refs/heads/main' && github.repository == 'bdunderscore/ndmf'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    runs-on: ubuntu-latest
+    concurrency:
+      group: docs-publish
+      cancel-in-progress: true
+    needs: build-docs
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs
+          path: docs
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
