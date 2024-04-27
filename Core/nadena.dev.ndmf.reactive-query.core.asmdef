@@ -1,3 +1,16 @@
 {
-	"name": "nadena.dev.ndmf.reactive-query.core"
+    "name": "nadena.dev.ndmf.reactive-query.core",
+    "rootNamespace": "",
+    "references": [
+        ""
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
 }
