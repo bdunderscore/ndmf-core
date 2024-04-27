@@ -29,7 +29,7 @@ jobs:
           path: docfx~/_site
         
   publish-docs:
-    if: github.ref == 'refs/heads/main' && github.repository == 'bdunderscore/ndmf'
+    if: github.ref == 'refs/heads/main' && github.repository == 'bdunderscore/ndmf-rq'
     permissions:
       contents: read
       pages: write
