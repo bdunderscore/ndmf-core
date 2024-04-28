@@ -88,25 +88,64 @@ namespace nadena.dev.ndmf.ReactiveQuery
         #endregion
         
         #region IObservable<T> API
+
+        private class ObserverContext<T>
+        {
+            private readonly TaskScheduler _scheduler;
+            private IObserver<T> _observer;
+            private Task _priorInvocation = Task.CompletedTask;
+
+            public ObserverContext(IObserver<T> observer, TaskScheduler scheduler)
+            {
+                _observer = observer;
+                _scheduler = scheduler;
+            }
+            
+            public void Invoke(Action<IObserver<T>> action)
+            {
+                _priorInvocation = _priorInvocation.ContinueWith(_ => action(_observer),
+                    CancellationToken.None,
+                    // Ensure that we don't invoke an observation while holding our lock
+                    TaskContinuationOptions.RunContinuationsAsynchronously,
+                    _scheduler
+                );
+            }
+        }
         
-        private HashSet<IObserver<T>> _observers = new(new ObjectIdentityComparer<IObserver<T>>());
-        
+        private HashSet<ObserverContext<T>> _observers = new(new ObjectIdentityComparer<ObserverContext<T>>());
+
         public IDisposable Subscribe(IObserver<T> observer)
         {
+            return Subscribe(observer, null);
+        }
+        
+        [PublicAPI]
+        public IDisposable Subscribe(IObserver<T> observer, TaskScheduler scheduler)
+        {
+            scheduler = scheduler ?? this.Scheduler.Scheduler ?? TaskScheduler.Default;
+            
+            var observerContext = new ObserverContext<T>(observer, scheduler);
+            
             lock (_lock)
             {
-                _observers.Add(observer);
+                _observers.Add(observerContext);
 
                 if (_currentValueIsValid)
                 {
-                    if (_currentValueException != null)
+                    var cv = _currentValue;
+                    var ex = _currentValueException;
+                    
+                    observerContext.Invoke(o =>
                     {
-                        observer.OnError(_currentValueException);
-                    }
-                    else
-                    {
-                        observer.OnNext(_currentValue);
-                    }
+                        if (ex != null)
+                        {
+                            o.OnError(ex);
+                        }
+                        else
+                        {
+                            o.OnNext(cv);
+                        }
+                    });
                 }
                 else
                 {
@@ -114,15 +153,15 @@ namespace nadena.dev.ndmf.ReactiveQuery
                 }
             }
 
-            return new RemoveObserver(this, observer);
+            return new RemoveObserver(this, observerContext);
         }
         
         private class RemoveObserver : IDisposable
         {
             private readonly ReactiveQuery<T> _parent;
-            private readonly IObserver<T> _observer;
+            private readonly ObserverContext<T> _observer;
 
-            public RemoveObserver(ReactiveQuery<T> parent, IObserver<T> observer)
+            public RemoveObserver(ReactiveQuery<T> parent, ObserverContext<T> observer)
             {
                 _parent = parent;
                 _observer = observer;
@@ -133,7 +172,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
                 lock (_parent._lock)
                 {
                     _parent._observers.Remove(_observer);
-                    _observer.OnCompleted();
+                    _observer.Invoke(o => o.OnCompleted());
                 }
             }
         }
@@ -180,6 +219,11 @@ namespace nadena.dev.ndmf.ReactiveQuery
                     _valueTask = null;
 
                     _currentValueIsValid = false;
+                }
+
+                if (_observers.Count > 0)
+                {
+                    RequestCompute();
                 }
             }
             
@@ -230,8 +274,8 @@ namespace nadena.dev.ndmf.ReactiveQuery
                     _currentValue = result;
                     _currentValueException = e?.SourceException;
                     _currentValueIsValid = true;
-                    
-                    foreach (var observer in _observers)
+
+                    Action<IObserver<T>> op = observer =>
                     {
                         if (e != null)
                         {
@@ -241,6 +285,11 @@ namespace nadena.dev.ndmf.ReactiveQuery
                         {
                             observer.OnNext(result);
                         }
+                    };
+                    
+                    foreach (var observer in _observers)
+                    {
+                        observer.Invoke(op);
                     }
                 }
             }
