@@ -1,0 +1,19 @@
+{
+    "name": "nadena.dev.ndmf.reactive-query.tests.editor",
+    "rootNamespace": "",
+    "references": [
+        "nadena.dev.ndmf.reactive-query.core",
+        "nadena.dev.ndmf.reactive-query.unity.editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

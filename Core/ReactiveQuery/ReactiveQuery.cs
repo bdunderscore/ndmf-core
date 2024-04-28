@@ -57,8 +57,8 @@ namespace nadena.dev.ndmf.ReactiveQuery
     /// <typeparam name="T"></typeparam>
     public abstract class ReactiveQuery<T> : IObservable<T>
     {
-        // TODO: Override to unity main thread scheduler
-        protected virtual TaskFactory Scheduler { get; } = Task.Factory;
+        [PublicAPI]
+        protected virtual TaskFactory TaskFactory => ReactiveQueryScheduler.DefaultTaskFactory;
         
         #region State
         
@@ -228,7 +228,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
         [PublicAPI]
         public IDisposable Subscribe(IObserver<T> observer, TaskScheduler scheduler)
         {
-            scheduler = scheduler ?? this.Scheduler.Scheduler ?? TaskScheduler.Default;
+            scheduler = scheduler ?? this.TaskFactory.Scheduler ?? TaskScheduler.Default;
             
             var observerContext = new ObserverContext<T>(observer, scheduler);
             
@@ -382,6 +382,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
                 e = ExceptionDispatchInfo.Capture(ex);
             }
 
+            System.Console.WriteLine("ComputeInternal: before lock");
             lock (_lock)
             {
                 if (_invalidationCount == seq)
@@ -407,6 +408,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
                         }
                     };
                     
+                    System.Console.WriteLine("ComputeInternal: before observers");
                     foreach (var observer in _observers)
                     {
                         observer.Invoke(op);
@@ -414,6 +416,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
                 }
             }
 
+            System.Console.WriteLine("ComputeInternal: before exit");
             e?.Throw();
             return result;
         }
@@ -432,7 +435,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
                     context.CancellationToken = new CancellationToken();
 
                     // _context.Activate();
-                    _valueTask = Scheduler.StartNew(() => ComputeInternal(context), context.CancellationToken).Unwrap();
+                    _valueTask = TaskFactory.StartNew(() => ComputeInternal(context), context.CancellationToken).Unwrap();
                 }
 
                 return _valueTask;

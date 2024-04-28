@@ -4,9 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace UnitTests
+namespace nadena.dev.ndmf.ReactiveQuery.StandaloneTests
 {
-    public class ObservableInterfaceTest
+    public class ObservableInterfaceTest : StandaloneTestBase
     {
         class TestObserver<T> : IObserver<T>
         {
@@ -33,6 +33,7 @@ namespace UnitTests
         }
         
         [Test]
+        [Timeout(2000)]
         public void ObservableBasicTest()
         {
             var rq = new TestQuery<int>(_ => Task.FromResult(42));
@@ -99,6 +100,7 @@ namespace UnitTests
         }
         
         [Test]
+        [Timeout(2000)]
         public void LimitsParallelismInObserverScope()
         {
             Barrier barrier = new Barrier(2);
@@ -146,6 +148,7 @@ namespace UnitTests
         }
 
         [Test]
+        [Timeout(2000)]
         public void ErrorReportingTest()
         {
             var ex = new Exception("Test exception");

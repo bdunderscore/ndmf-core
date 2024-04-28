@@ -1,17 +1,16 @@
-﻿/*using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine.Profiling;
-using VRC.SDKBase;
 
 namespace nadena.dev.ndmf.ReactiveQuery
 {
-    internal sealed class NDMFTaskScheduler : TaskScheduler
+    internal sealed class UnityMainThreadTaskScheduler : TaskScheduler
     {
-        internal static NDMFTaskScheduler Instance { get; } = new NDMFTaskScheduler();
+        internal static UnityMainThreadTaskScheduler Instance { get; } = new UnityMainThreadTaskScheduler();
         
         private Thread _unityMainThread = null;
         private const int MaxFrameTime = 50;
@@ -20,6 +19,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
         static void InitScheduler()
         {
             Instance._unityMainThread = Thread.CurrentThread;
+            //ReactiveQueryScheduler.DefaultTaskFactory = new TaskFactory(Instance);
         }
         
         private object _lock = new object();
@@ -160,4 +160,4 @@ namespace nadena.dev.ndmf.ReactiveQuery
             }
         }
     }
-}*/
+}

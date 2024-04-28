@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using nadena.dev.ndmf.ReactiveQuery;
 
-namespace UnitTests
+namespace nadena.dev.ndmf.ReactiveQuery.StandaloneTests
 {
     internal class TestQuery<T> : ReactiveQuery<T>
     {

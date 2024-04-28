@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Core.ReactiveQuery
+namespace nadena.dev.ndmf.ReactiveQuery
 {
     internal sealed class SynchronousTaskScheduler : TaskScheduler
     {
