@@ -31,6 +31,41 @@ namespace nadena.dev.ndmf.ReactiveQuery.StandaloneTests
                 Sequence.Add(value);
             }
         }
+
+        // We don't want things to be running on the unity main thread as that'll be busy in a blocking wait...
+        
+        private class ThreadPoolSyncContext : SynchronizationContext
+        {
+            public override void Post(SendOrPostCallback d, object state)
+            {
+                ThreadPool.QueueUserWorkItem(_ => d(state));
+            }
+            
+            public override void Send(SendOrPostCallback d, object state)
+            {
+                d(state);
+            }
+        }
+        
+        private SynchronizationContext _priorSyncContext, _priorOverrideSyncContext;
+        [OneTimeSetUp]
+        public void Setup()
+        {
+            SynchronizationContext threadPoolSyncContext = new ThreadPoolSyncContext();
+    
+            _priorSyncContext = SynchronizationContext.Current;
+            _priorOverrideSyncContext = ReactiveQueryScheduler.SynchronizationContextOverride.Value;
+        
+            SynchronizationContext.SetSynchronizationContext(threadPoolSyncContext);
+            ReactiveQueryScheduler.SynchronizationContextOverride.Value = threadPoolSyncContext;
+        }
+
+        [OneTimeTearDown]
+        public void TearDown()
+        {
+            SynchronizationContext.SetSynchronizationContext(_priorSyncContext);
+            ReactiveQueryScheduler.SynchronizationContextOverride.Value = _priorOverrideSyncContext;
+        }
         
         [Test]
         [Timeout(2000)]
@@ -104,47 +139,62 @@ namespace nadena.dev.ndmf.ReactiveQuery.StandaloneTests
         public void LimitsParallelismInObserverScope()
         {
             Barrier barrier = new Barrier(2);
-            
+
             var rq = new TestQuery<int>(_ => Task.FromResult(42));
-            
+
             var o1 = new BarrierObserver(1);
             var o2 = new BarrierObserver(2);
 
-            var d1 = rq.Subscribe(o1);
-            var d2 = rq.Subscribe(o2);
-            
+            IDisposable d1, d2;
+
+            d1 = rq.Subscribe(o1);
+            d2 = rq.Subscribe(o2);
+
             Thread.Sleep(100);
 
-            o1.Barrier.SignalAndWait();
-            Assert.IsFalse(o1.Broken); Assert.AreEqual(1, o1.ObservationCount);
-            o1.Barrier.SignalAndWait();
+            try
+            {
+                Assert.IsTrue(o1.Barrier.SignalAndWait(100));
+                Assert.IsFalse(o1.Broken);
+                Assert.AreEqual(1, o1.ObservationCount);
+                Assert.IsTrue(o1.Barrier.SignalAndWait(100));
 
-            rq.Invalidate();
-            
-            o1.Barrier.SignalAndWait();
-            Assert.IsFalse(o1.Broken); Assert.AreEqual(2, o1.ObservationCount);
-            o1.Barrier.SignalAndWait();
-            
-            rq.Invalidate();
-            
-            o1.Barrier.SignalAndWait();
-            Assert.IsFalse(o1.Broken); Assert.AreEqual(3, o1.ObservationCount);
-            o1.Barrier.SignalAndWait();
-            
-            // o2 was blocked all this time, let's go check on it now
-            o2.Barrier.SignalAndWait();
-            Assert.IsFalse(o2.Broken); Assert.AreEqual(1, o2.ObservationCount);
-            o2.Barrier.SignalAndWait(); o2.Barrier.SignalAndWait();
-            Assert.IsFalse(o2.Broken); Assert.AreEqual(2, o2.ObservationCount);
-            o2.Barrier.SignalAndWait(); o2.Barrier.SignalAndWait();
-            Assert.IsFalse(o2.Broken); Assert.AreEqual(3, o2.ObservationCount);
-            o2.Barrier.SignalAndWait();
-            
-            d1.Dispose();
-            d2.Dispose();
-            
-            o1.Barrier.Dispose();
-            o2.Barrier.Dispose();
+                rq.Invalidate();
+
+                Assert.IsTrue(o1.Barrier.SignalAndWait(100));
+                Assert.IsFalse(o1.Broken);
+                Assert.AreEqual(2, o1.ObservationCount);
+                Assert.IsTrue(o1.Barrier.SignalAndWait(100));
+
+                rq.Invalidate();
+
+                Assert.IsTrue(o1.Barrier.SignalAndWait(100));
+                Assert.IsFalse(o1.Broken);
+                Assert.AreEqual(3, o1.ObservationCount);
+                Assert.IsTrue(o1.Barrier.SignalAndWait(100));
+
+                // o2 was blocked all this time, let's go check on it now
+                Assert.IsTrue(o2.Barrier.SignalAndWait(100));
+                Assert.IsFalse(o2.Broken);
+                Assert.AreEqual(1, o2.ObservationCount);
+                Assert.IsTrue(o2.Barrier.SignalAndWait(100));
+                Assert.IsTrue(o2.Barrier.SignalAndWait(100));
+                Assert.IsFalse(o2.Broken);
+                Assert.AreEqual(2, o2.ObservationCount);
+                Assert.IsTrue(o2.Barrier.SignalAndWait(100));
+                Assert.IsTrue(o2.Barrier.SignalAndWait(100));
+                Assert.IsFalse(o2.Broken);
+                Assert.AreEqual(3, o2.ObservationCount);
+                Assert.IsTrue(o2.Barrier.SignalAndWait(100));
+
+                d1.Dispose();
+                d2.Dispose();
+            }
+            finally
+            {
+                o1.Barrier.Dispose();
+                o2.Barrier.Dispose();
+            }
         }
 
         [Test]

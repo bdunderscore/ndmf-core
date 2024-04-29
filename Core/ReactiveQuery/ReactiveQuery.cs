@@ -57,8 +57,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
     /// <typeparam name="T"></typeparam>
     public abstract class ReactiveQuery<T> : IObservable<T>
     {
-        [PublicAPI]
-        protected virtual TaskFactory TaskFactory => ReactiveQueryScheduler.DefaultTaskFactory;
+        [PublicAPI] protected virtual TaskScheduler TaskScheduler { get; } = ReactiveQueryScheduler.TaskScheduler;
         
         #region State
         
@@ -207,8 +206,8 @@ namespace nadena.dev.ndmf.ReactiveQuery
         private HashSet<ObserverContext<T>> _observers = new(new ObjectIdentityComparer<ObserverContext<T>>());
 
         /// <summary>
-        /// Subscribes an observer to this query. The observer will be executed on the TaskScheduler associated with
-        /// this query, or if that is not possible, the default task scheduler for ReactiveQueries.
+        /// Subscribes an observer to this query. The observer will be executed on the TaskScheduler associated with the
+        /// current synchronization context.
         /// </summary>
         /// <param name="observer"></param>
         /// <returns>A disposable which will deregister the observer, once disposed</returns>
@@ -219,8 +218,8 @@ namespace nadena.dev.ndmf.ReactiveQuery
         
         /// <summary>
         /// Subscribes an observer to this query. The observer will be executed on the provided TaskScheduler.
-        /// If the provided scheduler is null, the observer will be executed on the TaskScheduler associated with this
-        /// query, or if that is not possible, the default task scheduler for ReactiveQueries.
+        /// If the provided scheduler is null, the observer will be executed on the TaskScheduler associated with the
+        /// current synchronization context.
         /// </summary>
         /// <param name="observer"></param>
         /// <param name="scheduler"></param>
@@ -228,7 +227,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
         [PublicAPI]
         public IDisposable Subscribe(IObserver<T> observer, TaskScheduler scheduler)
         {
-            scheduler = scheduler ?? this.TaskFactory.Scheduler ?? TaskScheduler.Default;
+            scheduler = scheduler ?? TaskScheduler.FromCurrentSynchronizationContext();
             
             var observerContext = new ObserverContext<T>(observer, scheduler);
             
@@ -354,6 +353,8 @@ namespace nadena.dev.ndmf.ReactiveQuery
 
         internal async Task<T> ComputeInternal(ComputeContext context)
         {
+            await TaskThrottle.MaybeThrottle();
+            
             long seq = _invalidationCount;
 
             Task cancelledTask;
@@ -435,7 +436,12 @@ namespace nadena.dev.ndmf.ReactiveQuery
                     context.CancellationToken = new CancellationToken();
 
                     // _context.Activate();
-                    _valueTask = TaskFactory.StartNew(() => ComputeInternal(context), context.CancellationToken).Unwrap();
+                    _valueTask = Task.Factory.StartNew(
+                        () => ComputeInternal(context),
+                        context.CancellationToken,
+                        TaskCreationOptions.None,
+                        TaskScheduler
+                    ).Unwrap();
                 }
 
                 return _valueTask;

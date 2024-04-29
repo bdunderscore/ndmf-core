@@ -44,6 +44,8 @@ namespace nadena.dev.ndmf.ReactiveQuery
             );
 
             var compute = q.RequestCompute();
+
+            await TaskThrottle.MaybeThrottle();
             await Task.WhenAny(compute, q.Invalidated.ContinueWith(_ => Task.FromCanceled(ct)));
             
             ct.ThrowIfCancellationRequested();

@@ -15,6 +15,18 @@ namespace nadena.dev.ndmf.ReactiveQuery.StandaloneTests
             {
                 throw new TimeoutException("Task did not complete in time");
             }
-        } 
+        }
+        
+        public static async Task Timeout(this Task task, int timeout = 1000)
+        {
+            if (await Task.WhenAny(task, Task.Delay(timeout)) == task)
+            {
+                await task;
+            }
+            else
+            {
+                throw new TimeoutException("Task did not complete in time");
+            }
+        }
     }
 }
