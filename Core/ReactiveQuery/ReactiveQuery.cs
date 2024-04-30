@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Core.ReactiveQuery;
 using JetBrains.Annotations;
 
 namespace nadena.dev.ndmf.ReactiveQuery
@@ -343,6 +344,11 @@ namespace nadena.dev.ndmf.ReactiveQuery
                 if (_observers.Count > 0)
                 {
                     RequestCompute();
+
+                    foreach (var observer in _observers)
+                    {
+                        observer.Invoke(o => (o as IInvalidationObserver)?.OnInvalidate());
+                    }
                 }
             }
             
@@ -362,6 +368,8 @@ namespace nadena.dev.ndmf.ReactiveQuery
             {
                 cancelledTask = _cancelledTask;
                 _cancelledTask = null;
+
+                context.OnInvalidate = Invalidated;
             }
 
             // Ensure we don't ever have multiple instances of the same RQ computation running in parallel

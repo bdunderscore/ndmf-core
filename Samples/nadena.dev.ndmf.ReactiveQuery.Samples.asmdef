@@ -1,0 +1,19 @@
+{
+    "name": "nadena.dev.ndmf.ReactiveQuery.Samples",
+    "rootNamespace": "",
+    "references": [
+        "GUID:dea0612daadfed648b1e06f1a009ab5e",
+        "GUID:45c24afec8b080f4fbeaf89f2dc12dc6"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -93,6 +93,11 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
                     _pendingWork.Dequeue().Run();
                     n++;
                 } while (_pendingWork.Count > 0 && !terminationCondition());
+
+                if (_pendingWork.Count > 0)
+                {
+                    Debug.Log("Throttling SynchronizationContext: " + n + " tasks processed, " + _pendingWork.Count + " remaining");
+                }
             }
 
             lock (_lock)

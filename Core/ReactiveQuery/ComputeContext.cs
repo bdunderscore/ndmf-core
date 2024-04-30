@@ -24,6 +24,7 @@ namespace nadena.dev.ndmf.ReactiveQuery
     {
         public BlockingNode BlockingOn { get; }
         public Action Invalidate { get; internal set; } = () => { };
+        public Task OnInvalidate { get; internal set; }
         public CancellationToken CancellationToken { get; internal set; } = CancellationToken.None;
 
         internal ComputeContext(Func<string> description)
