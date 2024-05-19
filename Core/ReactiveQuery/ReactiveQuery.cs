@@ -322,39 +322,43 @@ namespace nadena.dev.ndmf.ReactiveQuery
 
         internal void Invalidate(long expectedSeq)
         {
-            TaskCompletionSource<object> invalidationToken = null;
-            
-            lock (_lock)
+            using (new SyncContextScope(ReactiveQueryScheduler.SynchronizationContext))
             {
-                if (expectedSeq == _invalidationCount || expectedSeq == -1)
+                TaskCompletionSource<object> invalidationToken = null;
+
+                lock (_lock)
                 {
-                    if (_valueTask != null && !_valueTask.IsCompleted)
+                    if (expectedSeq == _invalidationCount || expectedSeq == -1)
                     {
-                        _cancelledTask = _valueTask;
+                        if (_valueTask != null && !_valueTask.IsCompleted)
+                        {
+                            _cancelledTask = _valueTask;
+                        }
+
+                        invalidationToken = _invalidated;
+                        _invalidated = null;
+                        _invalidationCount++;
+                        _valueTask = null;
+
+                        _currentValueIsValid = false;
                     }
 
-                    invalidationToken = _invalidated;
-                    _invalidated = null;
-                    _invalidationCount++;
-                    _valueTask = null;
-
-                    _currentValueIsValid = false;
-                }
-
-                if (_observers.Count > 0)
-                {
-                    RequestCompute();
-
-                    foreach (var observer in _observers)
+                    if (_observers.Count > 0)
                     {
-                        observer.Invoke(o => (o as IInvalidationObserver)?.OnInvalidate());
+
+                        RequestCompute();
+
+                        foreach (var observer in _observers)
+                        {
+                            observer.Invoke(o => (o as IInvalidationObserver)?.OnInvalidate());
+                        }
                     }
                 }
+
+                // This triggers invalidation of downstream queries (as well as potentially other user code), so drop the
+                // lock before invoking it...
+                invalidationToken?.SetResult(null);
             }
-            
-            // This triggers invalidation of downstream queries (as well as potentially other user code), so drop the
-            // lock before invoking it...
-            invalidationToken?.SetResult(null);
         }
 
         internal async Task<T> ComputeInternal(ComputeContext context)
@@ -443,13 +447,16 @@ namespace nadena.dev.ndmf.ReactiveQuery
                     // TODO: arrange for cancellation when we invalidate the task
                     context.CancellationToken = new CancellationToken();
 
-                    // _context.Activate();
-                    _valueTask = Task.Factory.StartNew(
-                        () => ComputeInternal(context),
-                        context.CancellationToken,
-                        TaskCreationOptions.None,
-                        TaskScheduler
-                    ).Unwrap();
+                    using (new SyncContextScope(ReactiveQueryScheduler.SynchronizationContext))
+                    {
+                        // _context.Activate();
+                        _valueTask = Task.Factory.StartNew(
+                            () => ComputeInternal(context),
+                            context.CancellationToken,
+                            TaskCreationOptions.None,
+                            TaskScheduler
+                        ).Unwrap();
+                    }
                 }
 
                 return _valueTask;

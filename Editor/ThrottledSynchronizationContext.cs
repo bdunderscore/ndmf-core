@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using UnityEditor;
+using UnityEngine.Profiling;
 using Debug = UnityEngine.Debug;
 
 namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
@@ -16,10 +17,14 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
                 = new ThrottledSynchronizationContext(SynchronizationContext.Current);
         }
         
+        private static CustomSampler _tscontext = CustomSampler.Create("ThrottledSynchronizationContext");
+        private static CustomSampler _executingTask = CustomSampler.Create("TaskRunning");
         private readonly object _lock = new object();
         private readonly SynchronizationContext _parent;
         private Queue<PendingWork> _pendingWork = new Queue<PendingWork>();
         private int _owningThreadId;
+        
+        public int OwningThreadId => _owningThreadId;
         
         // locked:
         private List<PendingWork> _remoteWork = new List<PendingWork>();
@@ -27,6 +32,8 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
         
         private bool IsRunning { get; set; } = false;
 
+        public bool InContext => _owningThreadId == Thread.CurrentThread.ManagedThreadId && IsRunning;
+        
         private bool IsQueued
         {
             get => _isQueued;
@@ -77,7 +84,8 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
             {
                 throw new InvalidOperationException("Can only be called from the owning thread");
             }
-            
+         
+            _tscontext.Begin();
             lock (_lock)
             {
                 IsRunning = true;
@@ -90,7 +98,9 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
                 int n = 0;
                 do
                 {
+                    _executingTask.Begin();
                     _pendingWork.Dequeue().Run();
+                    _executingTask.End();
                     n++;
                 } while (_pendingWork.Count > 0 && !terminationCondition());
 
@@ -108,6 +118,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
                     IsQueued = true;
                 }
             }
+            _tscontext.End();
         }
 
         public override void Post(SendOrPostCallback d, object state)
@@ -120,6 +131,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
             {
                 lock (_lock)
                 {
+                    CheckInvocation();
                     _remoteWork.Add(new PendingWork(d, state, null));
                     IsQueued = true;
                 }
@@ -134,6 +146,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
             }
             else
             {
+                CheckInvocation();
                 var waitHandle = new ManualResetEvent(false);
                 lock (_lock)
                 {
@@ -143,6 +156,14 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
 
                 waitHandle.WaitOne();
             }
+        }
+
+        private void CheckInvocation()
+        {
+            if (Thread.CurrentThread.ManagedThreadId != _owningThreadId) return;
+            if (SynchronizationContext.Current == this) return;
+            
+            Debug.LogWarning("Work was enqueued into ThrottledSynchronizationContext from a foreign task. This can result in deadlocks!");
         }
 
         private class PendingWork

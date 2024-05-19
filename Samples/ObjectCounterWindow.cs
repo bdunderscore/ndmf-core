@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Core.ReactiveQuery;
 using nadena.dev.ndmf.ReactiveQuery.Core;
@@ -43,9 +44,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.Samples
                     pendingTasks.Add(ctx.Observe(_objToCount.Get(child.gameObject)));
                 }
 
-                await Task.WhenAll(pendingTasks);
-                
-                return children + pendingTasks.ConvertAll(t => t.Result).Sum();
+                return children + (await Task.WhenAll(pendingTasks).PreventRecursion()).Sum();
             }, "Object to Count");
         private static QueryCache<TargetHolder, int> _holderToCount = new(
             async (ctx, holder) => await ctx.Observe(_objToCount.Get(

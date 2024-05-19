@@ -53,6 +53,8 @@ namespace nadena.dev.ndmf.ReactiveQuery.Core
         {
             lock (_lock)
             {
+                additions = 0;
+                
                 var keysToRemove = new List<WeakKey<T>>();
                 foreach (var pair in _cache)
                 {

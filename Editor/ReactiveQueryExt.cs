@@ -7,9 +7,10 @@
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
             
-            ChangeStreamMonitor.Instance.Monitor(obj, invalidate, onInvalidate);
-
-            return obj;;
+            ObjectWatcher.Instance.MonitorObjectProps(out var dispose, obj, _ => invalidate(), onInvalidate);
+            onInvalidate.ContinueWith(_ => dispose.Dispose());
+            
+            return obj;
         }
     }
 }
