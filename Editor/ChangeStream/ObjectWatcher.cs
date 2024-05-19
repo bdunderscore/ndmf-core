@@ -106,20 +106,23 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
             }
         }
 
-        public C[] MonitorGetComponents<T, C>(out IDisposable cancel, GameObject obj, Action<T> callback, T target) where T : class where C : Component
+        public C[] MonitorGetComponents<T, C>(out IDisposable cancel, GameObject obj, Action<T> callback, T target, Func<C[]> get, bool includeChildren) where T : class
         {
             cancel = default;
-            
-            C[] components = obj.GetComponents<C>();
+
+            C[] components = get();
             
             Hierarchy.RegisterGameObjectListener(obj, (t, e) =>
             {
+                if (e == HierarchyEvent.ChildComponentsChanged && !includeChildren) return false;
+                
                 switch (e)
                 {
+                    case HierarchyEvent.ChildComponentsChanged:
                     case HierarchyEvent.SelfComponentsChanged:
                     case HierarchyEvent.ForceInvalidate:
-                        var newComponents = obj.GetComponents<C>();
-                        if (Enumerable.SequenceEqual(components, newComponents))
+                        var newComponents = get();
+                        if (components.SequenceEqual(newComponents))
                         {
                             return false;
                         }
@@ -132,17 +135,19 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
                         return false;
                 }
             }, target);
+
+            if (includeChildren) Hierarchy.EnableComponentMonitoring(obj);
             
             cancel = CancelWrapper(cancel);
 
-            return (C[]) components.Clone();
+            return components;
         }
-        
-        public C[] MonitorGetComponentsInChildren<T, C>(out IDisposable cancel, GameObject obj, Action<T> callback, T target, bool includeInactive = false) where T : class where C : Component
+
+        public C MonitorGetComponent<T, C>(out IDisposable cancel, GameObject obj, Action<T> callback, T target, Func<C> get) where T : class
         {
             cancel = default;
-            
-            C[] components = obj.GetComponentsInChildren<C>(includeInactive);
+
+            C component = get();
             
             Hierarchy.RegisterGameObjectListener(obj, (t, e) =>
             {
@@ -151,8 +156,8 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
                     case HierarchyEvent.SelfComponentsChanged:
                     case HierarchyEvent.ChildComponentsChanged:
                     case HierarchyEvent.ForceInvalidate:
-                        var newComponents = obj.GetComponentsInChildren<C>(includeInactive);
-                        if (Enumerable.SequenceEqual(components, newComponents))
+                        var newComponent = get();
+                        if (ReferenceEquals(component, newComponent))
                         {
                             return false;
                         }
@@ -168,9 +173,8 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
 
             cancel = CancelWrapper(cancel);
 
-            return (C[]) components.Clone();
+            return component;
         }
-
         
         class WrappedDisposable : IDisposable
         {

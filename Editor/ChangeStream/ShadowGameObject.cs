@@ -127,6 +127,12 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
                 }
             }
 
+            if (shadow.Parent?.ComponentMonitoring == true && !shadow.ComponentMonitoring)
+            {
+                EnableComponentMonitoring(shadow);
+                FireParentComponentChangeNotifications(shadow.Parent);
+            }
+
             return shadow;
         }
 

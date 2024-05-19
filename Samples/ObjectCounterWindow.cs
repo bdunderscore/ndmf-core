@@ -37,14 +37,9 @@ namespace nadena.dev.ndmf.ReactiveQuery.Samples
                 
                 var transform = ctx.Observe(obj).transform;
 
-                int children = transform.childCount;
-                List<Task<int>> pendingTasks = new List<Task<int>>(children);
-                foreach (Transform child in transform)
-                {
-                    pendingTasks.Add(ctx.Observe(_objToCount.Get(child.gameObject)));
-                }
+                var children = ctx.GetComponentsInChildren<Transform>(transform.gameObject, true);
 
-                return children + (await Task.WhenAll(pendingTasks).PreventRecursion()).Sum();
+                return children.Length;
             }, "Object to Count");
         private static QueryCache<TargetHolder, int> _holderToCount = new(
             async (ctx, holder) => await ctx.Observe(_objToCount.Get(
