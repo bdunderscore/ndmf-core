@@ -1,8 +1,11 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿#region
 
-namespace nadena.dev.ndmf.ReactiveQuery
+using System;
+using System.Threading;
+
+#endregion
+
+namespace nadena.dev.ndmf.rq
 {
     public sealed class SyncContextScope : IDisposable
     {

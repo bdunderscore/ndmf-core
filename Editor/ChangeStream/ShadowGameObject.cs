@@ -1,16 +1,23 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
-namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
+#endregion
+
+namespace nadena.dev.ndmf.rq.unity.editor
 {
-    using UnityObject = UnityEngine.Object;
-    
+    #region
+
+    using UnityObject = Object;
+
+    #endregion
+
     internal enum HierarchyEvent
     {
         /// <summary>

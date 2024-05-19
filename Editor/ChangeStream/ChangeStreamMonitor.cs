@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using UnityEditor;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
-using Object = System.Object;
+﻿#region
 
-namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
+using System;
+using System.Diagnostics;
+using UnityEditor;
+using Debug = UnityEngine.Debug;
+
+#endregion
+
+namespace nadena.dev.ndmf.rq.unity.editor
 {
     internal class ChangeStreamMonitor
     {

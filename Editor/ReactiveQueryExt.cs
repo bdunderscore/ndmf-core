@@ -1,6 +1,12 @@
-﻿using UnityEngine;
+﻿#region
 
-namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
+using System;
+using UnityEngine;
+using Object = UnityEngine.Object;
+
+#endregion
+
+namespace nadena.dev.ndmf.rq.unity.editor
 {
     public static class ReactiveQueryExt
     {
@@ -14,7 +20,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
         /// <param name="obj"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Observe<T>(this ComputeContext ctx, T obj) where T : UnityEngine.Object
+        public static T Observe<T>(this ComputeContext ctx, T obj) where T : Object
         {
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
@@ -53,7 +59,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
         }
         */
         
-        public static Component GetComponent(this ComputeContext ctx, GameObject obj, System.Type type)
+        public static Component GetComponent(this ComputeContext ctx, GameObject obj, Type type)
         {
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
@@ -75,7 +81,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
             return c;
         }
         
-        public static Component[] GetComponents(this ComputeContext ctx, GameObject obj, System.Type type)
+        public static Component[] GetComponents(this ComputeContext ctx, GameObject obj, Type type)
         {
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
@@ -97,7 +103,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
             return c;
         }
         
-        public static Component[] GetComponentsInChildren(this ComputeContext ctx, GameObject obj, System.Type type, bool includeInactive)
+        public static Component[] GetComponentsInChildren(this ComputeContext ctx, GameObject obj, Type type, bool includeInactive)
         {
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;

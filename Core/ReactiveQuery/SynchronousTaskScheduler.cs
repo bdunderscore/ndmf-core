@@ -1,8 +1,12 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace nadena.dev.ndmf.ReactiveQuery
+#endregion
+
+namespace nadena.dev.ndmf.rq
 {
     internal sealed class SynchronousTaskScheduler : TaskScheduler
     {

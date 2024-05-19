@@ -1,6 +1,10 @@
-﻿using System;
+﻿#region
 
-namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
+using System;
+
+#endregion
+
+namespace nadena.dev.ndmf.rq.unity.editor
 {
     internal class Listener<T> : IDisposable
     {

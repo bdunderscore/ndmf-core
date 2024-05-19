@@ -1,13 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#region
+
+using System;
 using System.Linq;
 using System.Threading;
-using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
+#endregion
+
+namespace nadena.dev.ndmf.rq.unity.editor
 {
-    using UnityObject = UnityEngine.Object;
+    #region
+
+    using UnityObject = Object;
+
+    #endregion
+
     /// <summary>
     /// ObjectWatcher provides a high level API for monitoring for various changes to assets and scene objects in the
     /// editor.

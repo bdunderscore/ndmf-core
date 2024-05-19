@@ -1,8 +1,12 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace nadena.dev.ndmf.ReactiveQuery
+#endregion
+
+namespace nadena.dev.ndmf.rq
 {
     public static class TaskThrottle
     {
@@ -32,13 +36,13 @@ namespace nadena.dev.ndmf.ReactiveQuery
             
             public ThrottleConditionScope(Func<bool> condition)
             {
-                _previousCondition = TaskThrottle.ShouldThrottle.Value;
-                TaskThrottle.ShouldThrottle.Value = condition;
+                _previousCondition = ShouldThrottle.Value;
+                ShouldThrottle.Value = condition;
             }
 
             public void Dispose()
             {
-                TaskThrottle.ShouldThrottle.Value = _previousCondition;
+                ShouldThrottle.Value = _previousCondition;
             }
         }
     }

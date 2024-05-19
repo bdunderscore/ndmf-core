@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Core.ReactiveQuery;
-using nadena.dev.ndmf.ReactiveQuery.Core;
-using nadena.dev.ndmf.ReactiveQuery.unity.editor;
+﻿#region
+
+using System;
+using nadena.dev.ndmf.rq.unity.editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace nadena.dev.ndmf.ReactiveQuery.Samples
+#endregion
+
+namespace nadena.dev.ndmf.rq.Samples
 {
     public class ObjectCounterWindow : EditorWindow, IObserver<int>, IInvalidationObserver
     {
@@ -27,10 +25,11 @@ namespace nadena.dev.ndmf.ReactiveQuery.Samples
         private TargetHolder _holder;
         private SerializedObject _holderSO;
         private SerializedProperty _targetProp;
-        
-        private static QueryCache<TargetHolder, GameObject> _holderToObj = new(
+
+        private static ReactiveQuery<TargetHolder, GameObject> _holderToObj = new(
             async (ctx, holder) => ctx.Observe(holder).target, "Holder to Object");
-        private static QueryCache<GameObject, int> _objToCount = new(
+
+        private static ReactiveQuery<GameObject, int> _objToCount = new(
             async (ctx, obj) =>
             {
                 if (obj == null) return 0;
@@ -41,7 +40,8 @@ namespace nadena.dev.ndmf.ReactiveQuery.Samples
 
                 return children.Length;
             }, "Object to Count");
-        private static QueryCache<TargetHolder, int> _holderToCount = new(
+
+        private static ReactiveQuery<TargetHolder, int> _holderToCount = new(
             async (ctx, holder) => await ctx.Observe(_objToCount.Get(
                 await ctx.Observe(_holderToObj.Get(holder))
             )), "Holder to Count");

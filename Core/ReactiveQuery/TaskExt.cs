@@ -1,7 +1,11 @@
-﻿using System.Threading;
+﻿#region
+
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Core.ReactiveQuery
+#endregion
+
+namespace nadena.dev.ndmf.rq
 {
     public static class TaskExt
     {

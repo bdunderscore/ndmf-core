@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using nadena.dev.ndmf.ReactiveQuery.unity.editor;
+using nadena.dev.ndmf.rq.unity.editor;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;

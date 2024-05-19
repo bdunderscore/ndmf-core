@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using nadena.dev.ndmf.ReactiveQuery;
+using nadena.dev.ndmf.rq;
 
-namespace nadena.dev.ndmf.ReactiveQuery.StandaloneTests
+namespace nadena.dev.ndmf.rq.StandaloneTests
 {
-    internal class TestQuery<T> : ReactiveQuery<T>
+    internal class TestQuery<T> : ReactiveValue<T>
     {
         private Func<ComputeContext, Task<T>> _value;
 

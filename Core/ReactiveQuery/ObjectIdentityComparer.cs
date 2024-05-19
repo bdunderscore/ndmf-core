@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿#region
+
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace nadena.dev.ndmf.ReactiveQuery
+#endregion
+
+namespace nadena.dev.ndmf.rq
 {
     internal class ObjectIdentityComparer<T> : IEqualityComparer<T>
     {

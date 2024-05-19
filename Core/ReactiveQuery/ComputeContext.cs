@@ -1,8 +1,12 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace nadena.dev.ndmf.ReactiveQuery
+#endregion
+
+namespace nadena.dev.ndmf.rq
 {
     public sealed class BlockingNode
     {
@@ -31,8 +35,8 @@ namespace nadena.dev.ndmf.ReactiveQuery
         {
             BlockingOn = new BlockingNode(new Lazy<string>(description));
         }
-        
-        public async Task<T> Observe<T>(ReactiveQuery<T> q)
+
+        public async Task<T> Observe<T>(ReactiveValue<T> q)
         {
             // capture the current invalidate function immediately, to avoid infinite invalidate loops
             var invalidate = Invalidate;

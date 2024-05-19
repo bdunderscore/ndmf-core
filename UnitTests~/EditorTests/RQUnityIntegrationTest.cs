@@ -1,14 +1,12 @@
-﻿using System.Collections;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
-using nadena.dev.ndmf.ReactiveQuery;
-using nadena.dev.ndmf.ReactiveQuery.StandaloneTests;
+using nadena.dev.ndmf.rq;
+using nadena.dev.ndmf.rq.StandaloneTests;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace UnitTests.EditorTests
 {
@@ -25,8 +23,8 @@ namespace UnitTests.EditorTests
         [Test]
         public async Task ReactiveQueriesRunInMainThread()
         {
-            ReactiveQuery<int> rq =
-                ReactiveQuery<int>.Create("", _ => Task.FromResult(Thread.CurrentThread.ManagedThreadId));
+            ReactiveValue<int> rq =
+                ReactiveValue<int>.Create("", _ => Task.FromResult(Thread.CurrentThread.ManagedThreadId));
 
             Assert.AreEqual(mainThreadId, await rq.GetValueAsync().Timeout());
         }
@@ -37,11 +35,11 @@ namespace UnitTests.EditorTests
             int startedCount = 0;
             List<Task<int>> queries = new List<Task<int>>();
 
-            var pq = ReactiveQuery<int>.Create("", _ => Task.FromResult(1));
+            var pq = ReactiveValue<int>.Create("", _ => Task.FromResult(1));
 
             for (int i = 0; i < 10; i++)
             {
-                queries.Insert(0, ReactiveQuery<int>.Create("", async ctx =>
+                queries.Insert(0, ReactiveValue<int>.Create("", async ctx =>
                 {
                     Interlocked.Increment(ref startedCount);
                     Debug.Log("sleep start");

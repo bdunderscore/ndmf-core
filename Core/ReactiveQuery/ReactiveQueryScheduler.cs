@@ -1,8 +1,11 @@
-﻿using System;
+﻿#region
+
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace nadena.dev.ndmf.ReactiveQuery
+#endregion
+
+namespace nadena.dev.ndmf.rq
 {
     public static class ReactiveQueryScheduler
     {

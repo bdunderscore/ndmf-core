@@ -1,7 +1,11 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Collections.Generic;
 
-namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
+#endregion
+
+namespace nadena.dev.ndmf.rq.unity.editor
 {
     internal class ReversibleIndex<K, V>
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace nadena.dev.ndmf.ReactiveQuery.StandaloneTests
+namespace nadena.dev.ndmf.rq.StandaloneTests
 {
     public static class TestHelpers
     {

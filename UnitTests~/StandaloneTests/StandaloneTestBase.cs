@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using NUnit.Framework;
 
-namespace nadena.dev.ndmf.ReactiveQuery.StandaloneTests
+namespace nadena.dev.ndmf.rq.StandaloneTests
 {
     public class StandaloneTestBase
     {

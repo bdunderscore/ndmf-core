@@ -1,4 +1,6 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -6,7 +8,9 @@ using UnityEditor;
 using UnityEngine.Profiling;
 using Debug = UnityEngine.Debug;
 
-namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
+#endregion
+
+namespace nadena.dev.ndmf.rq.unity.editor
 {
     internal sealed class ThrottledSynchronizationContext : SynchronizationContext
     {
@@ -14,7 +18,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
         static void Init()
         {
             ReactiveQueryScheduler.SynchronizationContextOverride.Value
-                = new ThrottledSynchronizationContext(SynchronizationContext.Current);
+                = new ThrottledSynchronizationContext(Current);
         }
         
         private static CustomSampler _tscontext = CustomSampler.Create("ThrottledSynchronizationContext");
@@ -161,7 +165,7 @@ namespace nadena.dev.ndmf.ReactiveQuery.unity.editor
         private void CheckInvocation()
         {
             if (Thread.CurrentThread.ManagedThreadId != _owningThreadId) return;
-            if (SynchronizationContext.Current == this) return;
+            if (Current == this) return;
             
             Debug.LogWarning("Work was enqueued into ThrottledSynchronizationContext from a foreign task. This can result in deadlocks!");
         }

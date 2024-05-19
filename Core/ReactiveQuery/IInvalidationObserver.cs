@@ -1,4 +1,4 @@
-﻿namespace Core.ReactiveQuery
+﻿namespace nadena.dev.ndmf.rq
 {
     public interface IInvalidationObserver
     {
