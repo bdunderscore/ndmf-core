@@ -143,7 +143,7 @@ namespace nadena.dev.ndmf.preview
         /// <param name="sequencePoints"></param>
         public void SetSequence(IEnumerable<SequencePoint> sequencePoints)
         {
-            
+            _sequence.SetSequence(sequencePoints);
         }
 
         public IDisposable AddMutator(SequencePoint sequencePoint, IRenderFilter filter)
