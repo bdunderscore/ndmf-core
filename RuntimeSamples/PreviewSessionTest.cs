@@ -19,7 +19,7 @@ namespace nadena.dev.ndmf.rq.Samples
 
         private void OnEnable()
         {
-            PreviewSession.Active = _session;
+            PreviewSession.Current = _session;
 
             if (_point == null)
             {
@@ -32,7 +32,7 @@ namespace nadena.dev.ndmf.rq.Samples
 
         private void OnDisable()
         {
-            PreviewSession.Active = null;
+            PreviewSession.Current = null;
 
             _remove?.Dispose();
             _remove = null;

@@ -19,7 +19,7 @@ namespace nadena.dev.ndmf.preview
         /// <summary>
         /// The PreviewSession used for any cameras not overriden using `OverrideCamera`.
         /// </summary>
-        public static PreviewSession Active { get; set; } = null;
+        public static PreviewSession Current { get; set; } = null;
 
 
         /// <summary>
@@ -46,6 +46,15 @@ namespace nadena.dev.ndmf.preview
         {
             return _observer._currentInstance?.Replacements ?? Enumerable.Empty<(Renderer, Renderer)>();
         }
+
+        internal ImmutableDictionary<Renderer, Renderer> OriginalToProxyRenderer =>
+            _observer._currentInstance?.OriginalToProxyRenderer ?? ImmutableDictionary<Renderer, Renderer>.Empty;
+
+        internal ImmutableDictionary<GameObject, GameObject> OriginalToProxyObject =>
+            _observer._currentInstance?.OriginalToProxyObject ?? ImmutableDictionary<GameObject, GameObject>.Empty;
+
+        internal ImmutableDictionary<GameObject, GameObject> ProxyToOriginalObject =>
+            _observer._currentInstance?.ProxyToOriginalObject ?? ImmutableDictionary<GameObject, GameObject>.Empty;
 
         private readonly Sequencer _sequence = new Sequencer();
 

@@ -95,10 +95,18 @@ namespace nadena.dev.ndmf.preview
         private Dictionary<Renderer, RendererState> _rendererStates = new();
         private List<GameObject> _gameObjects = new();
 
+        internal ImmutableDictionary<Renderer, Renderer> OriginalToProxyRenderer { get; private set; }
+        internal ImmutableDictionary<GameObject, GameObject> OriginalToProxyObject { get; private set; }
+        internal ImmutableDictionary<GameObject, GameObject> ProxyToOriginalObject { get; private set; }
+
         public PreviewSessionInstance(
             ImmutableList<PreviewSession.ResolvedRegistration> registrations
         )
         {
+            OriginalToProxyRenderer = ImmutableDictionary<Renderer, Renderer>.Empty;
+            OriginalToProxyObject = ImmutableDictionary<GameObject, GameObject>.Empty;
+            ProxyToOriginalObject = ImmutableDictionary<GameObject, GameObject>.Empty;
+            
             foreach (var registration in registrations)
             {
                 if (registration.targets.IsEmpty) continue;
@@ -129,6 +137,10 @@ namespace nadena.dev.ndmf.preview
                         return;
                     }
 
+                    OriginalToProxyRenderer = OriginalToProxyRenderer.Add(renderer, state.target);
+                    OriginalToProxyObject = OriginalToProxyObject.Add(renderer.gameObject, state.target.gameObject);
+                    ProxyToOriginalObject = ProxyToOriginalObject.Add(state.target.gameObject, renderer.gameObject);
+
                     try
                     {
                         session.SetupRenderer(state.original, state.target);
@@ -145,6 +157,7 @@ namespace nadena.dev.ndmf.preview
         private RendererState InitRenderer(Renderer renderer)
         {
             var targetObject = new GameObject("Proxy for " + renderer.gameObject.name);
+            targetObject.AddComponent<SelfDestructComponent>().KeepAlive = this;
 
             Renderer target;
 

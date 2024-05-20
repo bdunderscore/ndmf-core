@@ -2,7 +2,7 @@
     "name": "nadena.dev.ndmf.reactive-query.core",
     "rootNamespace": "",
     "references": [
-        ""
+        "nadena.dev.ndmf.reactive-query.jetbrains-annotations"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

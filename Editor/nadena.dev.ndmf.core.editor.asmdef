@@ -2,7 +2,8 @@
     "name": "nadena.dev.ndmf.core.editor",
     "rootNamespace": "",
     "references": [
-        "nadena.dev.ndmf.reactive-query.core"
+        "nadena.dev.ndmf.reactive-query.core",
+        "nadena.dev.ndmf.core.runtime"
     ],
     "includePlatforms": [
         "Editor"

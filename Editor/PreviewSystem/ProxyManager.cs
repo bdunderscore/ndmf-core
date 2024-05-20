@@ -34,7 +34,7 @@ namespace nadena.dev.ndmf.preview
             ResetStates();
 
 
-            var sess = PreviewSession.Active;
+            var sess = PreviewSession.Current;
             if (sess == null) return;
 
             sess.OnUpdate(updateCount);
