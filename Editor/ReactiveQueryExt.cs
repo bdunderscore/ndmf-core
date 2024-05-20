@@ -61,6 +61,8 @@ namespace nadena.dev.ndmf.rq.unity.editor
         
         public static Component GetComponent(this ComputeContext ctx, GameObject obj, Type type)
         {
+            if (obj == null) return null;
+            
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
             
@@ -72,6 +74,8 @@ namespace nadena.dev.ndmf.rq.unity.editor
         
         public static C[] GetComponents<C>(this ComputeContext ctx, GameObject obj) where C : Component
         {
+            if (obj == null) return Array.Empty<C>();
+            
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
             
@@ -83,6 +87,8 @@ namespace nadena.dev.ndmf.rq.unity.editor
         
         public static Component[] GetComponents(this ComputeContext ctx, GameObject obj, Type type)
         {
+            if (obj == null) return Array.Empty<Component>();
+            
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
             
@@ -94,10 +100,13 @@ namespace nadena.dev.ndmf.rq.unity.editor
         
         public static C[] GetComponentsInChildren<C>(this ComputeContext ctx, GameObject obj, bool includeInactive) where C : Component
         {
+            if (obj == null) return Array.Empty<C>();
+            
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
-            
-            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, _ => invalidate(), onInvalidate, () => obj.GetComponentsInChildren<C>(includeInactive), true);
+
+            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, _ => invalidate(), onInvalidate,
+                () => { return obj.GetComponentsInChildren<C>(includeInactive); }, true);
             onInvalidate.ContinueWith(_ => dispose.Dispose());
 
             return c;
@@ -105,6 +114,8 @@ namespace nadena.dev.ndmf.rq.unity.editor
         
         public static Component[] GetComponentsInChildren(this ComputeContext ctx, GameObject obj, Type type, bool includeInactive)
         {
+            if (obj == null) return Array.Empty<Component>();
+            
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
             

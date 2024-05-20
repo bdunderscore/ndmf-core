@@ -26,25 +26,24 @@ namespace nadena.dev.ndmf.rq.Samples
         private SerializedObject _holderSO;
         private SerializedProperty _targetProp;
 
-        private static ReactiveQuery<TargetHolder, GameObject> _holderToObj = new(
-            async (ctx, holder) => ctx.Observe(holder).target, "Holder to Object");
+        private static ReactiveQuery<TargetHolder, GameObject> _holderToObj = new("Holder to Object",
+            async (ctx, holder) => ctx.Observe(holder).target);
 
-        private static ReactiveQuery<GameObject, int> _objToCount = new(
-            async (ctx, obj) =>
-            {
-                if (obj == null) return 0;
-                
-                var transform = ctx.Observe(obj).transform;
+        private static ReactiveQuery<GameObject, int> _objToCount = new("Object to Count", async (ctx, obj) =>
+        {
+            if (obj == null) return 0;
 
-                var children = ctx.GetComponentsInChildren<Transform>(transform.gameObject, true);
+            var transform = ctx.Observe(obj).transform;
 
-                return children.Length;
-            }, "Object to Count");
+            var children = ctx.GetComponentsInChildren<Transform>(transform.gameObject, true);
 
-        private static ReactiveQuery<TargetHolder, int> _holderToCount = new(
-            async (ctx, holder) => await ctx.Observe(_objToCount.Get(
+            return children.Length;
+        });
+
+        private static ReactiveQuery<TargetHolder, int> _holderToCount = new("Holder to Count", async (ctx, holder) =>
+            await ctx.Observe(_objToCount.Get(
                 await ctx.Observe(_holderToObj.Get(holder))
-            )), "Holder to Count");
+            )));
 
         private IDisposable _registration;
         

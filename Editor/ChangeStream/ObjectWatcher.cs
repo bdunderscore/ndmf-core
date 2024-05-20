@@ -1,9 +1,11 @@
 ﻿#region
 
 using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 #endregion
@@ -63,6 +65,52 @@ namespace nadena.dev.ndmf.rq.unity.editor
         internal ObjectWatcher()
         {
             
+        }
+
+        public ImmutableList<GameObject> MonitorSceneRoots<T>(out IDisposable cancel, Action<T> callback, T target)
+            where T : class
+        {
+            ImmutableList<GameObject> rootSet = GetRootSet();
+
+            // TODO scene load callbacks
+
+            cancel = Hierarchy.RegisterRootSetListener((t, e) =>
+            {
+                ImmutableList<GameObject> newRootSet = GetRootSet();
+                if (!newRootSet.SequenceEqual(rootSet))
+                {
+                    InvokeCallback(callback, t);
+
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }, target);
+
+            cancel = CancelWrapper(cancel);
+
+            return rootSet;
+        }
+
+        private ImmutableList<GameObject> GetRootSet()
+        {
+            ImmutableList<GameObject>.Builder roots = ImmutableList.CreateBuilder<GameObject>();
+
+            var sceneCount = SceneManager.sceneCount;
+            for (int i = 0; i < sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.IsValid() || !scene.isLoaded) continue;
+
+                foreach (var go in scene.GetRootGameObjects())
+                {
+                    roots.Add(go);
+                }
+            }
+
+            return roots.ToImmutable();
         }
 
         public void MonitorObjectProps<T>(out IDisposable cancel, UnityObject obj, Action<T> callback, T target) where T : class
@@ -129,8 +177,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
                     case HierarchyEvent.ChildComponentsChanged:
                     case HierarchyEvent.SelfComponentsChanged:
                     case HierarchyEvent.ForceInvalidate:
-                        var newComponents = get();
-                        if (components.SequenceEqual(newComponents))
+                        if (obj != null && components.SequenceEqual(get()))
                         {
                             return false;
                         }
@@ -164,8 +211,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
                     case HierarchyEvent.SelfComponentsChanged:
                     case HierarchyEvent.ChildComponentsChanged:
                     case HierarchyEvent.ForceInvalidate:
-                        var newComponent = get();
-                        if (ReferenceEquals(component, newComponent))
+                        if (obj != null && ReferenceEquals(component, get()))
                         {
                             return false;
                         }

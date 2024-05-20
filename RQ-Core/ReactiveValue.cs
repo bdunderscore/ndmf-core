@@ -120,9 +120,20 @@ namespace nadena.dev.ndmf.rq
             return new SimpleValue<T>(description, compute);
         }
 
+        public ReactiveValue<U> Map<U>(Func<T, U> map)
+        {
+            return ReactiveValue<U>.Create(ToString(),
+                async context => { return map(await context.Observe(this)); });
+        }
+
         /// <summary>
-        /// Attempts to get the current value, but only if it is available immediately. Does not trigger computation if
-        /// the value is not available.
+        /// Attempts to get the current value, but only if it is available immediately.
+        ///
+        /// If the value is unavailable immediately:
+        /// * If a value has been computed previously, a stale value will be placed in `value`, and the function will
+        ///   return false.
+        /// * If no value has been computed yet, `value` will contain `default`.
+        /// * In either case, an asynchronous computation will be initiated.
         /// </summary>
         /// <param name="value">The value, if available</param>
         /// <returns>True if the value was available, false if not</returns>
@@ -131,13 +142,16 @@ namespace nadena.dev.ndmf.rq
         {
             lock (_lock)
             {
-                value = default;
-                if (!_currentValueIsValid) return false;
-
                 value = _currentValue;
                 if (_currentValueException != null)
                 {
                     throw _currentValueException;
+                }
+
+                if (!_currentValueIsValid)
+                {
+                    RequestCompute();
+                    return false;
                 }
 
                 return true;

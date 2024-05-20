@@ -42,19 +42,19 @@ namespace nadena.dev.ndmf.rq.unity.editor
         ForceInvalidate,
     }
     
-    internal interface IHierarchyListener
-    {
-        void NotifyPathChange(GameObject obj);
-        void NotifyPotentialComponentSetChange(GameObject obj);
-    }
-    
     internal class ShadowHierarchy
     {
         internal SynchronizationContext _syncContext;
         internal Dictionary<int, ShadowGameObject> _gameObjects = new();
         internal Dictionary<int, ShadowObject> _otherObjects = new();
+        internal ListenerSet<HierarchyEvent> _rootSetListener = new();
         
         int lastPruned = Int32.MinValue;
+
+        internal IDisposable RegisterRootSetListener(ListenerSet<HierarchyEvent>.Invokee invokee, object target)
+        {
+            return _rootSetListener.Register(invokee, target);
+        }
         
         internal IDisposable RegisterGameObjectListener(GameObject targetObject, ListenerSet<HierarchyEvent>.Invokee invokee,
             object target)
@@ -127,6 +127,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
                 if (parent == null)
                 {
                     shadow.Parent = null;
+                    _rootSetListener.Fire(HierarchyEvent.ForceInvalidate);
                 }
                 else
                 {
@@ -200,9 +201,12 @@ namespace nadena.dev.ndmf.rq.unity.editor
             if (newParent == null)
             {
                 shadow.Parent = null;
+                _rootSetListener.Fire(HierarchyEvent.ForceInvalidate);
             }
             else if (newParent != shadow.Parent?.GameObject)
             {
+                if (shadow.Parent == null) _rootSetListener.Fire(HierarchyEvent.ForceInvalidate);
+                
                 shadow.Parent = ActivateShadowObject(newParent);
                 FireParentComponentChangeNotifications(shadow.Parent);
 

@@ -22,7 +22,7 @@ namespace nadena.dev.ndmf.rq
 
         private int additions = 0;
 
-        public ReactiveQuery(Func<ComputeContext, T, Task<U>> compute, string description)
+        public ReactiveQuery(string description, Func<ComputeContext, T, Task<U>> compute)
         {
             _compute = compute;
             _description = description;
