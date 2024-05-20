@@ -24,6 +24,7 @@ SOFTWARE. */
 
 using System;
 using System.Diagnostics;
+
 // ReSharper disable UnusedType.Global
 
 #pragma warning disable 1591
