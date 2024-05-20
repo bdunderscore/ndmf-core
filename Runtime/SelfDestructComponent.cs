@@ -1,13 +1,18 @@
 #region
 
+using System;
 using UnityEditor;
 using UnityEngine;
 
 #endregion
 
-internal class SelfDestructComponent : MonoBehaviour
+/// <summary>
+/// This component will self destruct one frame after load, unless the KeepAlive field is set to a live object.
+/// </summary>
+[AddComponentMenu("")]
+public class SelfDestructComponent : MonoBehaviour
 {
-    internal object KeepAlive; // don't destroy when non-null (non-serialized field)
+    [NonSerialized] public object KeepAlive; // don't destroy when non-null (non-serialized field)
 
     void OnValidate()
     {

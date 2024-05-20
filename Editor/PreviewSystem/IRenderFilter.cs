@@ -1,6 +1,7 @@
 ﻿#region
 
 using System;
+using nadena.dev.ndmf.rq;
 using UnityEngine;
 
 #endregion
@@ -13,6 +14,7 @@ namespace nadena.dev.ndmf.preview
     public interface IRenderFilter
     {
         public IRenderFilterSession CreateSession();
+        public ReactiveValue<Renderer[]> Targets { get; }
     }
 
     public interface IRenderFilterSession : IDisposable

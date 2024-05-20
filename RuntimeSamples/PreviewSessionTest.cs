@@ -26,8 +26,7 @@ namespace nadena.dev.ndmf.rq.Samples
                 _point = new SequencePoint();
             }
 
-            _remove = _session.AddMutator(_point, new Filter(),
-                new ReactiveField<Renderer[]>(new[] { GetComponent<Renderer>() }).AsReactiveValue());
+            _remove = _session.AddMutator(_point, new Filter(GetComponent<Renderer>()));
         }
 
         private void OnDisable()
@@ -40,12 +39,21 @@ namespace nadena.dev.ndmf.rq.Samples
 
         private class Filter : IRenderFilter
         {
+            private ReactiveField<Renderer[]> _targetRenderer;
+
+            public Filter(Renderer target)
+            {
+                _targetRenderer = new(new[] { target });
+            }
+            
             public IRenderFilterSession CreateSession()
             {
                 Debug.Log("=== session init ===");
 
                 return new FilterSession();
             }
+
+            public ReactiveValue<Renderer[]> Targets => _targetRenderer.AsReactiveValue();
         }
 
         private class FilterSession : IRenderFilterSession

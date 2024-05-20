@@ -58,12 +58,6 @@ namespace nadena.dev.ndmf.preview
 
         private readonly Sequencer _sequence = new Sequencer();
 
-        internal class Registration
-        {
-            public IRenderFilter filter;
-            public ReactiveValue<Renderer[]> targetRenderers;
-        }
-
         internal class ResolvedRegistration
         {
             public readonly IRenderFilter filter;
@@ -76,8 +70,8 @@ namespace nadena.dev.ndmf.preview
             }
         }
 
-        private ReactiveField<ImmutableDictionary<SequencePoint, Registration>> targets
-            = new(ImmutableDictionary<SequencePoint, Registration>.Empty);
+        private ReactiveField<ImmutableDictionary<SequencePoint, IRenderFilter>> _filters
+            = new(ImmutableDictionary<SequencePoint, IRenderFilter>.Empty);
 
         private ReactiveValue<(ImmutableList<SequencePoint>, ImmutableHashSet<Renderer>)> _resolvedState;
 
@@ -90,16 +84,16 @@ namespace nadena.dev.ndmf.preview
         {
             _resolved = ReactiveValue<ImmutableList<ResolvedRegistration>>.Create("resolved sequence", async ctx =>
             {
-                var targets = await ctx.Observe(this.targets.AsReactiveValue());
+                var filters = await ctx.Observe(_filters.AsReactiveValue());
                 var sequence = await ctx.Observe(_sequence.Sequence);
 
                 // avoid NPEs due to timing issues by checking that targets contains the key here
-                var registrations = sequence.Where(p => targets.ContainsKey(p)).Select(p => targets[p]);
+                var registrations = sequence.Where(p => filters.ContainsKey(p)).Select(p => filters[p]);
 
                 return (await Task.WhenAll(registrations.Select(async r =>
                 {
-                    var targets = await ctx.Observe(r.targetRenderers);
-                    return new ResolvedRegistration(r.filter, targets.ToImmutableHashSet());
+                    var targets = await ctx.Observe(r.Targets);
+                    return new ResolvedRegistration(r, targets.ToImmutableHashSet());
                 }))).ToImmutableList();
             });
 
@@ -152,16 +146,11 @@ namespace nadena.dev.ndmf.preview
             
         }
 
-        public IDisposable AddMutator(SequencePoint sequencePoint, IRenderFilter filter,
-            ReactiveValue<Renderer[]> targetRenderers)
+        public IDisposable AddMutator(SequencePoint sequencePoint, IRenderFilter filter)
         {
             _sequence.AddPoint(sequencePoint);
 
-            targets.Value = targets.Value.Add(sequencePoint, new Registration()
-            {
-                filter = filter,
-                targetRenderers = targetRenderers,
-            });
+            _filters.Value = _filters.Value.Add(sequencePoint, filter);
 
             return new RemovalDisposable(this, sequencePoint);
         }
@@ -170,18 +159,16 @@ namespace nadena.dev.ndmf.preview
         {
             private PreviewSession _session;
             private SequencePoint _point;
-            private Registration _registration;
 
             public RemovalDisposable(PreviewSession session, SequencePoint point)
             {
                 _session = session;
                 _point = point;
-                _registration = session.targets.Value[point];
             }
 
             public void Dispose()
             {
-                _session.targets.Value = _session.targets.Value.Remove(_point);
+                _session._filters.Value = _session._filters.Value.Remove(_point);
             }
         }
 
