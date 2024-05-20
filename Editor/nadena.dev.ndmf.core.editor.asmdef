@@ -1,5 +1,5 @@
 {
-    "name": "nadena.dev.ndmf.reactive-query.unity.editor",
+    "name": "nadena.dev.ndmf.core.editor",
     "rootNamespace": "",
     "references": [
         "nadena.dev.ndmf.reactive-query.core"

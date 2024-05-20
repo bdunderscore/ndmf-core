@@ -3,7 +3,8 @@
     "rootNamespace": "",
     "references": [
         "GUID:dea0612daadfed648b1e06f1a009ab5e",
-        "GUID:45c24afec8b080f4fbeaf89f2dc12dc6"
+      "GUID:20167558c6ca75a4f9a9b61092e411cb",
+      "nadena.dev.ndmf.core.editor"
     ],
     "includePlatforms": [
         "Editor"

@@ -3,8 +3,8 @@
     "rootNamespace": "",
     "references": [
         "nadena.dev.ndmf.reactive-query.core",
-        "nadena.dev.ndmf.reactive-query.unity.editor",
-        "nadena.dev.ndmf.reactive-query.tests"
+      "nadena.dev.ndmf.reactive-query.tests",
+      "nadena.dev.ndmf.core.editor"
     ],
     "includePlatforms": [
         "Editor"

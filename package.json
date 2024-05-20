@@ -1,9 +1,9 @@
 {
-  "name": "nadena.dev.ndmf.reactive-query",
-  "displayName": "NDMF Reactive Query",
+  "name": "nadena.dev.ndmf.core",
+  "displayName": "[NDMF] NDMF Core",
   "version": "0.0.1",
   "unity": "2021.1",
-  "description": "Internal component used by the Non-Destructive Modular Framework. Provides caching and asynchronous calculation services.",
+  "description": "Non-avatar-specific used by the Non-Destructive Modular Framework.",
   "vrchatVersion": "2022.1.1",
   "author": {
     "name": "bd_",
