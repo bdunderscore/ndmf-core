@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using nadena.dev.ndmf.reactive_query.core.PreviewSystem;
+using nadena.dev.ndmf.preview;
 using UnityEngine;
 
 #endregion

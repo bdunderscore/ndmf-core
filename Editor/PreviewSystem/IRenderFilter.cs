@@ -5,7 +5,7 @@ using UnityEngine;
 
 #endregion
 
-namespace nadena.dev.ndmf.reactive_query.core.PreviewSystem
+namespace nadena.dev.ndmf.preview
 {
     /// <summary>
     /// Describes a transformation to be performed on a preview mesh.

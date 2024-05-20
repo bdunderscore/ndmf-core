@@ -6,7 +6,7 @@ using UnityEngine;
 
 #endregion
 
-namespace nadena.dev.ndmf.reactive_query.core.PreviewSystem
+namespace nadena.dev.ndmf.preview
 {
     /// <summary>
     /// Tracks the proxy meshes created by the preview system.

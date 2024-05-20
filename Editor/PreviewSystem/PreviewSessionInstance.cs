@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 
 #endregion
 
-namespace nadena.dev.ndmf.reactive_query.core.PreviewSystem
+namespace nadena.dev.ndmf.preview
 {
     internal sealed class PreviewSessionInstance : IDisposable
     {

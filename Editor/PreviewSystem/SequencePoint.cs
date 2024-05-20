@@ -1,4 +1,4 @@
-﻿namespace nadena.dev.ndmf.reactive_query.core.PreviewSystem
+﻿namespace nadena.dev.ndmf.preview
 {
     /// <summary>
     /// Describes the time at which a particular mesh operation should be performed. Sequence points are created
