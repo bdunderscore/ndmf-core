@@ -35,6 +35,7 @@ namespace nadena.dev.ndmf.preview
             return true;
         }
 
+        [UsedImplicitly]
         private static void Postfix_FilterInstanceIDs(
             ref IEnumerable<GameObject> gameObjects,
             ref int[] parentInstanceIDs,

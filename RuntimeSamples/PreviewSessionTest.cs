@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Threading.Tasks;
 using nadena.dev.ndmf.preview;
 using UnityEngine;
 
@@ -39,51 +41,30 @@ namespace nadena.dev.ndmf.rq.Samples
 
         private class Filter : IRenderFilter
         {
-            private ReactiveField<Renderer[]> _targetRenderer;
+            private ReactiveField<IImmutableList<IImmutableList<Renderer>>> _targetRenderer;
 
             public Filter(Renderer target)
             {
-                _targetRenderer = new(new[] { target });
-            }
-            
-            public IRenderFilterSession CreateSession()
-            {
-                Debug.Log("=== session init ===");
-
-                return new FilterSession();
+                _targetRenderer = new(
+                    ImmutableList<IImmutableList<Renderer>>.Empty.Add(
+                        ImmutableList<Renderer>.Empty.Add(target)
+                    )
+                );
             }
 
-            public ReactiveValue<Renderer[]> Targets => _targetRenderer.AsReactiveValue();
-        }
+            public ReactiveValue<IImmutableList<IImmutableList<Renderer>>> TargetGroups =>
+                _targetRenderer.AsReactiveValue();
 
-        private class FilterSession : IRenderFilterSession
-        {
-            private Dictionary<Material, Material> _mats = new Dictionary<Material, Material>();
-
-            public void SetupRenderer(Renderer original, Renderer target)
+            public Task MutateMeshData(IList<MeshState> state, ComputeContext context)
             {
-            }
-
-            public void OnFrame(Renderer original, Renderer target, ref bool rebuild)
-            {
-                var mat = original.sharedMaterial;
-                if (!_mats.TryGetValue(mat, out var replacement))
+                foreach (var mesh in state)
                 {
-                    replacement = new Material(mat);
-                    _mats[mat] = replacement;
+                    var mat = new Material(mesh.Materials[0]);
+                    mat.color = mat.color * new Color(1, 0.2f, 0.2f, 1f);
+                    mesh.Materials = mesh.Materials.SetItem(0, mat);
                 }
 
-                target.sharedMaterial = replacement;
-
-                replacement.color = mat.color * new Color(1, 0.2f, 0.2f, 1f);
-            }
-
-            public void Dispose()
-            {
-                foreach (var mat in _mats.Values)
-                {
-                    DestroyImmediate(mat);
-                }
+                return Task.CompletedTask;
             }
         }
     }

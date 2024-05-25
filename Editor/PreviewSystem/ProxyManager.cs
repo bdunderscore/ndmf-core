@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 #endregion
@@ -18,10 +19,10 @@ namespace nadena.dev.ndmf.preview
         {
             Camera.onPreCull += OnPreCull;
             Camera.onPostRender += OnPostRender;
-            EditorApplication.update += () => { updateCount++; };
+            EditorSceneManager.sceneSaving += (_, _) => ResetStates();
+            AssemblyReloadEvents.beforeAssemblyReload += ResetStates;
         }
-
-        private static int updateCount = 0;
+        
         private static List<(Renderer, bool)> _resetActions = new();
 
         private static void OnPostRender(Camera cam)
@@ -32,12 +33,9 @@ namespace nadena.dev.ndmf.preview
         private static void OnPreCull(Camera cam)
         {
             ResetStates();
-
-
+            
             var sess = PreviewSession.Current;
             if (sess == null) return;
-
-            sess.OnUpdate(updateCount);
 
             foreach (var (original, replacement) in sess.GetReplacements())
             {

@@ -1,51 +1,70 @@
 ﻿#region
 
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Threading.Tasks;
 using nadena.dev.ndmf.rq;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 #endregion
 
 namespace nadena.dev.ndmf.preview
 {
-    /// <summary>
-    /// Describes a transformation to be performed on a preview mesh.
-    /// </summary>
-    public interface IRenderFilter
+    public sealed class MeshState
     {
-        public IRenderFilterSession CreateSession();
-        public ReactiveValue<Renderer[]> Targets { get; }
+        public Renderer Original { get; }
+        public Mesh Mesh { get; set; }
+        public ImmutableList<Material> Materials { get; set; }
+        public event Action OnDispose;
+
+        private bool _disposed = false;
+
+        internal MeshState(Renderer renderer)
+        {
+            Original = renderer;
+
+            if (renderer is SkinnedMeshRenderer smr)
+            {
+                Mesh = Object.Instantiate(smr.sharedMesh);
+            }
+            else if (renderer is MeshRenderer mr)
+            {
+                Mesh = Object.Instantiate(mr.GetComponent<MeshFilter>().sharedMesh);
+            }
+
+            Materials = renderer.sharedMaterials.Select(m => new Material(m)).ToImmutableList();
+        }
+
+        // Not IDisposable as we don't want to expose that as a public API
+        internal void Dispose()
+        {
+            if (_disposed) return;
+
+            Object.DestroyImmediate(Mesh);
+            foreach (var material in Materials)
+            {
+                Object.DestroyImmediate(material);
+            }
+
+            OnDispose?.Invoke();
+        }
     }
 
-    public interface IRenderFilterSession : IDisposable
+    public interface IRenderFilter
     {
-        /// <summary>
-        /// Invoked when the preview mesh is created. Typically, this is the phase to make changes to things like bones,
-        /// bounds, etc.
-        /// </summary>
-        /// <param name="original"></param>
-        /// <param name="target"></param>
-        /// <exception cref="NotImplementedException"></exception>
-        public void SetupRenderer(Renderer original, Renderer target)
+        public ReactiveValue<IImmutableList<IImmutableList<Renderer>>> TargetGroups { get; }
+
+        public Task MutateMeshData(IList<MeshState> state, ComputeContext context)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
 
-        /// <summary>
-        /// Invoked once each editor frame. This is where you can do things like copy over blendshapes, etc.
-        /// </summary>
-        /// <param name="original"></param>
-        /// <param name="target"></param>
-        /// <param name="rebuild">Set to true if you request that the mesh be recreated</param>
-        public void OnFrame(Renderer original, Renderer target, ref bool rebuild)
+        public void OnFrame(Renderer original, Renderer proxy)
         {
-        }
-
-        /// <summary>
-        /// Invoked each editor frame, once, before the per-renderer OnFrame calls.
-        /// </summary>
-        public void OnFrameOnce()
-        {
+            
         }
     }
 }

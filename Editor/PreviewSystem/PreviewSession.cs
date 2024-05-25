@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading.Tasks;
 using nadena.dev.ndmf.rq;
 using UnityEngine;
 
@@ -44,96 +43,43 @@ namespace nadena.dev.ndmf.preview
 
         internal IEnumerable<(Renderer, Renderer)> GetReplacements()
         {
-            return _observer._currentInstance?.Replacements ?? Enumerable.Empty<(Renderer, Renderer)>();
+            return _session?.OnPreCull() ?? Enumerable.Empty<(Renderer, Renderer)>();
         }
 
         internal ImmutableDictionary<Renderer, Renderer> OriginalToProxyRenderer =>
-            _observer._currentInstance?.OriginalToProxyRenderer ?? ImmutableDictionary<Renderer, Renderer>.Empty;
+            _session?.OriginalToProxyRenderer ?? ImmutableDictionary<Renderer, Renderer>.Empty;
 
         internal ImmutableDictionary<GameObject, GameObject> OriginalToProxyObject =>
-            _observer._currentInstance?.OriginalToProxyObject ?? ImmutableDictionary<GameObject, GameObject>.Empty;
+            _session?.OriginalToProxyObject ?? ImmutableDictionary<GameObject, GameObject>.Empty;
 
         internal ImmutableDictionary<GameObject, GameObject> ProxyToOriginalObject =>
-            _observer._currentInstance?.ProxyToOriginalObject ?? ImmutableDictionary<GameObject, GameObject>.Empty;
+            _session?.ProxyToOriginalObject ?? ImmutableDictionary<GameObject, GameObject>.Empty;
 
         private readonly Sequencer _sequence = new Sequencer();
 
         internal class ResolvedRegistration
         {
             public readonly IRenderFilter filter;
-            public readonly ImmutableHashSet<Renderer> targets;
 
             public ResolvedRegistration(IRenderFilter filter, ImmutableHashSet<Renderer> targets)
             {
                 this.filter = filter;
-                this.targets = targets;
             }
         }
 
-        private ReactiveField<ImmutableDictionary<SequencePoint, IRenderFilter>> _filters
-            = new(ImmutableDictionary<SequencePoint, IRenderFilter>.Empty);
+        private Dictionary<SequencePoint, IRenderFilter> _filters = new();
 
-        private ReactiveValue<(ImmutableList<SequencePoint>, ImmutableHashSet<Renderer>)> _resolvedState;
+        private ProxySession _session;
 
-        private TargetObserver _observer;
-        private IDisposable _session;
-
-        private ReactiveValue<ImmutableList<ResolvedRegistration>> _resolved;
+        private ReactiveField<ImmutableList<IRenderFilter>> _resolved;
 
         public PreviewSession()
         {
-            _resolved = ReactiveValue<ImmutableList<ResolvedRegistration>>.Create("resolved sequence", async ctx =>
-            {
-                var filters = await ctx.Observe(_filters.AsReactiveValue());
-                var sequence = await ctx.Observe(_sequence.Sequence);
+            _resolved = new ReactiveField<ImmutableList<IRenderFilter>>(
+                ImmutableList<IRenderFilter>.Empty
+            );
 
-                // avoid NPEs due to timing issues by checking that targets contains the key here
-                var registrations = sequence.Where(p => filters.ContainsKey(p)).Select(p => filters[p]);
-
-                return (await Task.WhenAll(registrations.Select(async r =>
-                {
-                    var targets = await ctx.Observe(r.Targets);
-                    return new ResolvedRegistration(r, targets.ToImmutableHashSet());
-                }))).ToImmutableList();
-            });
-
-            _observer = new TargetObserver();
-            _session = _resolved.Subscribe(_observer);
-        }
-
-        internal class TargetObserver : IObserver<ImmutableList<ResolvedRegistration>>
-        {
-            public PreviewSessionInstance _currentInstance;
-
-            public void OnCompleted()
-            {
-                _currentInstance.Dispose();
-                _currentInstance = null;
-            }
-
-            public void OnError(Exception error)
-            {
-                Debug.LogException(error);
-            }
-
-            public void OnNext(ImmutableList<ResolvedRegistration> registrations)
-            {
-                _currentInstance?.Dispose();
-                _currentInstance = null;
-
-                _currentInstance = new PreviewSessionInstance(registrations);
-            }
-        }
-
-        private int lastUpdateFrame = 0;
-
-        internal void OnUpdate(int updateFrameCount)
-        {
-            if (lastUpdateFrame != updateFrameCount)
-            {
-                lastUpdateFrame = updateFrameCount;
-                _observer._currentInstance?.Update();
-            }
+            _session = new ProxySession(_resolved.AsReactiveValue());
         }
 
         /// <summary>
@@ -144,13 +90,17 @@ namespace nadena.dev.ndmf.preview
         public void SetSequence(IEnumerable<SequencePoint> sequencePoints)
         {
             _sequence.SetSequence(sequencePoints);
+
+            RebuildSequence();
         }
 
         public IDisposable AddMutator(SequencePoint sequencePoint, IRenderFilter filter)
         {
             _sequence.AddPoint(sequencePoint);
 
-            _filters.Value = _filters.Value.Add(sequencePoint, filter);
+            _filters.Add(sequencePoint, filter);
+
+            RebuildSequence();
 
             return new RemovalDisposable(this, sequencePoint);
         }
@@ -168,8 +118,17 @@ namespace nadena.dev.ndmf.preview
 
             public void Dispose()
             {
-                _session._filters.Value = _session._filters.Value.Remove(_point);
+                _session._filters.Remove(_point);
+                _session.RebuildSequence();
             }
+        }
+
+        void RebuildSequence()
+        {
+            var sequence = _sequence.Sequence;
+            var filters = sequence.Select(p => _filters.GetValueOrDefault(p)).Where(f => f != null).ToImmutableList();
+
+            _resolved.Value = filters;
         }
 
         /// <summary>

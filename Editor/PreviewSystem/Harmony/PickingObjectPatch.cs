@@ -43,10 +43,11 @@ namespace nadena.dev.ndmf.preview
 
         private static void Postfix_GetAllOverlapping(ref object __result)
         {
+            var erased = (IEnumerable)__result;
+
             var sess = PreviewSession.Current;
             if (sess == null) return;
 
-            var erased = (IEnumerable)__result;
             var list = (IList)ctor_l.Invoke(new object[0]);
 
             foreach (var obj in erased)
