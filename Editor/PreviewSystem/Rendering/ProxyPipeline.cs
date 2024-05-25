@@ -160,7 +160,8 @@ namespace nadena.dev.ndmf.preview
 
             if (_meshLeaves.TryGetValue(originalRenderer, out var node))
             {
-                if (node.PrepareTask.Result.TryGetValue(originalRenderer, out var state))
+                if (node.PrepareTask.IsCompleted &&
+                    node.PrepareTask.Result?.TryGetValue(originalRenderer, out var state) == true)
                 {
                     return state;
                 }
