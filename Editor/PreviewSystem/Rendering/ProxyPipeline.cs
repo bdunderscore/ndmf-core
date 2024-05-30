@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using nadena.dev.ndmf.rq;
+using UnityEditor;
 using UnityEngine;
 
 #endregion
@@ -55,6 +56,8 @@ namespace nadena.dev.ndmf.preview
                     {
                         Debug.LogException(t.Exception);
                     }
+
+                    EditorApplication.delayCall += SceneView.RepaintAll;
                 });
             }
         }
@@ -99,6 +102,7 @@ namespace nadena.dev.ndmf.preview
                 var node = graph.GetOrCreate(new ProxyNodeKey(renderer), () => new ProxyNode(renderer));
                 leaves = leaves.Add(renderer, node);
                 nodes.Add(node.Key);
+                _ = node.InvalidatedTask.ContinueWith(_ => Invalidate());
             }
 
             if (Invalidated)
@@ -115,6 +119,7 @@ namespace nadena.dev.ndmf.preview
 
                 var node = graph.GetOrCreate(key, () => new ProxyNode(filter, sourceRenderers, leaves));
                 nodes.Add(node.Key);
+                _ = node.InvalidatedTask.ContinueWith(_ => Invalidate());
 
                 foreach (var source in sourceRenderers)
                 {

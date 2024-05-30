@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using nadena.dev.ndmf.rq;
 using UnityEngine;
@@ -32,7 +31,7 @@ namespace nadena.dev.ndmf.preview
 
         public bool Equals(ProxyNodeKey other)
         {
-            return ReferenceEquals(Filter, other.Filter) && Equals(Sources, other.Sources);
+            return ReferenceEquals(Filter, other.Filter) && Sources.SequenceEqual(other.Sources);
         }
 
         public override bool Equals(object obj)
@@ -44,8 +43,14 @@ namespace nadena.dev.ndmf.preview
         {
             unchecked
             {
-                return ((Filter != null ? RuntimeHelpers.GetHashCode(Filter) : 0) * 397) ^
-                       (Sources != null ? Sources.GetHashCode() : 0);
+                var hashCode = (Filter != null ? Filter.GetHashCode() : 0);
+
+                foreach (var source in Sources)
+                {
+                    hashCode = hashCode * 397 ^ source.GetHashCode();
+                }
+
+                return hashCode;
             }
         }
     }
@@ -87,11 +92,15 @@ namespace nadena.dev.ndmf.preview
             Id = (IdSequence++);
             SourceNodes = renderGroup.ToImmutableDictionary(r => r, r => sourceNodes[r]);
 
-            Key = new ProxyNodeKey(filter, renderGroup.Select(r => (long)r.GetInstanceID()));
+            Key = new ProxyNodeKey(filter, renderGroup.Select(r => sourceNodes[r].Id));
 
             foreach (var node in SourceNodes.Values)
             {
-                node.InvalidatedTask.ContinueWith(_ => Invalidate());
+                node.InvalidatedTask.ContinueWith(_ =>
+                {
+                    Debug.Log("Trigger invalidate");
+                    Invalidate();
+                });
             }
 
             using (new SyncContextScope(ReactiveQueryScheduler.SynchronizationContext))
@@ -114,8 +123,16 @@ namespace nadena.dev.ndmf.preview
 
                         if (Invalidated) return null;
 
-                        var inputMeshes = SourceNodes.Select(kvp => kvp.Value.PrepareTask.Result[kvp.Key]).ToList();
+                        Debug.Log($"Execute node " + Id + " for filter " + filter);
+                        var inputMeshes = SourceNodes.Select(kvp =>
+                        {
+                            var node = kvp.Value;
+                            var state = kvp.Value.PrepareTask.Result[kvp.Key];
+                            Debug.Log($"Input node ID " + node.Id + " mesh name " + state.Mesh?.name);
 
+                            return state.Clone(Id);
+                        }).ToList();
+                        
                         await filter.MutateMeshData(inputMeshes, context);
 
                         return inputMeshes.ToImmutableDictionary(m => m.Original);
@@ -129,6 +146,7 @@ namespace nadena.dev.ndmf.preview
 
         public void Invalidate()
         {
+            Debug.Log("Invalidate");
             _invalidater.TrySetResult(null);
         }
 

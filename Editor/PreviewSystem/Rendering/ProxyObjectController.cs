@@ -36,6 +36,7 @@ namespace nadena.dev.ndmf.preview
 
                 var replacementSMR = (SkinnedMeshRenderer)_replacementRenderer;
                 replacementSMR.sharedMesh = state?.Mesh ?? smr_.sharedMesh;
+                replacementSMR.bones = smr_.bones;
             }
             else
             {

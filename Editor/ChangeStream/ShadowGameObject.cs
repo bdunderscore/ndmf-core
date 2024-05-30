@@ -59,6 +59,8 @@ namespace nadena.dev.ndmf.rq.unity.editor
         internal IDisposable RegisterGameObjectListener(GameObject targetObject, ListenerSet<HierarchyEvent>.Invokee invokee,
             object target)
         {
+            if (targetObject == null) return new NullDisposable();
+            
             ShadowGameObject shadowObject = ActivateShadowObject(targetObject);
 
             return shadowObject._listeners.Register(invokee, target);
@@ -67,6 +69,8 @@ namespace nadena.dev.ndmf.rq.unity.editor
         internal IDisposable RegisterObjectListener(UnityObject targetComponent, ListenerSet<HierarchyEvent>.Invokee invokee,
             object target)
         {
+            if (targetComponent == null) return new NullDisposable();
+            
             if (!_otherObjects.TryGetValue(targetComponent.GetInstanceID(), out var shadowComponent))
             {
                 shadowComponent = new ShadowObject(targetComponent);
@@ -74,6 +78,14 @@ namespace nadena.dev.ndmf.rq.unity.editor
             }
 
             return shadowComponent._listeners.Register(invokee, target);
+        }
+
+        internal class NullDisposable : IDisposable
+        {
+            public void Dispose()
+            {
+                // no-op
+            }
         }
 
         /// <summary>

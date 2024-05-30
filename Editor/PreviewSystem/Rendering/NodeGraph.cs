@@ -14,10 +14,10 @@ namespace nadena.dev.ndmf.preview
 
         public ProxyNode GetOrCreate(ProxyNodeKey key, Func<ProxyNode> OnMissing)
         {
-            if (!_nodes.TryGetValue(key, out var node) || node.Invalidated)
+            if (!_nodes.TryGetValue(key, out var node) || node.Invalidated || node.PrepareTask.IsFaulted)
             {
                 node = OnMissing();
-                _nodes.Add(key, node);
+                _nodes[key] = node;
             }
 
             return node;
