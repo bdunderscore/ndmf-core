@@ -113,6 +113,26 @@ namespace nadena.dev.ndmf.rq.unity.editor
             return roots.ToImmutable();
         }
 
+        public void MonitorObjectPath<T>(out IDisposable cancel, Transform t, Action<T> callback, T target)
+            where T : class
+        {
+            cancel = Hierarchy.RegisterGameObjectListener(t.gameObject, (t, e) =>
+            {
+                switch (e)
+                {
+                    case HierarchyEvent.PathChange:
+                    case HierarchyEvent.ForceInvalidate:
+                        InvokeCallback(callback, t);
+                        return true;
+                    default:
+                        return false;
+                }
+            }, target);
+            Hierarchy.EnablePathMonitoring(t.gameObject);
+
+            cancel = CancelWrapper(cancel);
+        }
+        
         public void MonitorObjectProps<T>(out IDisposable cancel, UnityObject obj, Action<T> callback, T target) where T : class
         {
             cancel = default;

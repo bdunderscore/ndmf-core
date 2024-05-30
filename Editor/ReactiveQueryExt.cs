@@ -1,6 +1,7 @@
 ﻿#region
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -24,11 +25,50 @@ namespace nadena.dev.ndmf.rq.unity.editor
         {
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
-            
-            ObjectWatcher.Instance.MonitorObjectProps(out var dispose, obj, _ => invalidate(), onInvalidate);
+
+            ObjectWatcher.Instance.MonitorObjectProps(out var dispose, obj, a => a(), invalidate);
             onInvalidate.ContinueWith(_ => dispose.Dispose());
             
             return obj;
+        }
+
+        public static IEnumerable<Transform> ObservePath(this ComputeContext ctx, Transform obj)
+        {
+            var invalidate = ctx.Invalidate;
+            var onInvalidate = ctx.OnInvalidate;
+
+            ObjectWatcher.Instance.MonitorObjectPath(out var dispose, obj, i => i(), invalidate);
+            onInvalidate.ContinueWith(_ => dispose.Dispose());
+
+            return FollowPath(obj);
+
+            IEnumerable<Transform> FollowPath(Transform obj)
+            {
+                while (obj != null)
+                {
+                    yield return obj;
+                    obj = obj.parent;
+                }
+            }
+        }
+
+        public static void ObserveTransformPosition(this ComputeContext ctx, Transform t)
+        {
+            foreach (var node in ctx.ObservePath(t))
+            {
+                ctx.Observe(node);
+            }
+        }
+
+        public static bool ActiveInHierarchy(this ComputeContext ctx, GameObject obj)
+        {
+            ObservePath(ctx, obj.transform);
+            return obj.activeInHierarchy;
+        }
+
+        public static bool ActiveAndEnabled(this ComputeContext ctx, Behaviour c)
+        {
+            return ActiveInHierarchy(ctx, c.gameObject) && ctx.Observe(c).enabled;
         }
         
         public static C GetComponent<C>(this ComputeContext ctx, GameObject obj) where C : Component
@@ -36,7 +76,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
 
-            var c = ObjectWatcher.Instance.MonitorGetComponent(out var dispose, obj, _ => invalidate(), onInvalidate,
+            var c = ObjectWatcher.Instance.MonitorGetComponent(out var dispose, obj, a => a(), invalidate,
                 () => obj != null ? obj.GetComponent<C>() : null);
             onInvalidate.ContinueWith(_ => dispose.Dispose());
 
@@ -67,7 +107,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
 
-            var c = ObjectWatcher.Instance.MonitorGetComponent(out var dispose, obj, _ => invalidate(), onInvalidate,
+            var c = ObjectWatcher.Instance.MonitorGetComponent(out var dispose, obj, a => a(), invalidate,
                 () => obj != null ? obj.GetComponent(type) : (Component)null);
             onInvalidate.ContinueWith(_ => dispose.Dispose());
 
@@ -81,7 +121,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
 
-            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, _ => invalidate(), onInvalidate,
+            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, a => a(), invalidate,
                 () => obj != null ? obj.GetComponents<C>() : Array.Empty<C>(), false);
             onInvalidate.ContinueWith(_ => dispose.Dispose());
 
@@ -95,7 +135,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
 
-            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, _ => invalidate(), onInvalidate,
+            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, a => a(), invalidate,
                 () => obj != null ? obj.GetComponents(type) : Array.Empty<Component>(), false);
             onInvalidate.ContinueWith(_ => dispose.Dispose());
 
@@ -109,7 +149,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
 
-            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, _ => invalidate(), onInvalidate,
+            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, a => a(), invalidate,
                 () => { return obj != null ? obj.GetComponentsInChildren<C>(includeInactive) : Array.Empty<C>(); },
                 true);
             onInvalidate.ContinueWith(_ => dispose.Dispose());
@@ -124,7 +164,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
             var invalidate = ctx.Invalidate;
             var onInvalidate = ctx.OnInvalidate;
 
-            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, _ => invalidate(), onInvalidate,
+            var c = ObjectWatcher.Instance.MonitorGetComponents(out var dispose, obj, a => a(), invalidate,
                 () => obj != null ? obj.GetComponentsInChildren(type, includeInactive) : Array.Empty<Component>(),
                 true);
             onInvalidate.ContinueWith(_ => dispose.Dispose());

@@ -165,6 +165,11 @@ namespace nadena.dev.ndmf.rq.unity.editor
             if (_gameObjects.TryGetValue(instanceId, out var shadow))
             {
                 shadow._listeners.Fire(HierarchyEvent.ObjectDirty);
+                if (shadow.IsActive != shadow.GameObject.activeSelf)
+                {
+                    shadow.IsActive = shadow.GameObject.activeSelf;
+                    FirePathChangeNotifications(shadow);
+                }
             }
             
             var component = EditorUtility.InstanceIDToObject(instanceId) as Component;
@@ -388,7 +393,8 @@ namespace nadena.dev.ndmf.rq.unity.editor
         private ShadowGameObject _parent;
         internal bool PathMonitoring { get; set; } = false;
         internal bool ComponentMonitoring { get; set; } = false;
-
+        internal bool IsActive { get; set; }
+        
         internal ShadowGameObject Parent
         {
             get => _parent;
@@ -421,6 +427,7 @@ namespace nadena.dev.ndmf.rq.unity.editor
             InstanceID = gameObject.GetInstanceID();
             GameObject = gameObject;
             Scene = gameObject.scene;
+            IsActive = gameObject.activeSelf;
         }
     }
 }
