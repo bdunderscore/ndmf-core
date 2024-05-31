@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using nadena.dev.ndmf.rq;
+using UnityEditor;
 using UnityEngine;
 
 #endregion
@@ -34,11 +35,19 @@ namespace nadena.dev.ndmf.preview
         {
             _filters = filters;
 
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             _unsubscribe = filters.Subscribe(this);
+        }
+
+        private void OnPlayModeStateChanged(PlayModeStateChange obj)
+        {
+            _active = _next = null;
+            _graph.Retain(ImmutableHashSet<ProxyNodeKey>.Empty);
         }
 
         public void Dispose()
         {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             _unsubscribe?.Dispose();
         }
 

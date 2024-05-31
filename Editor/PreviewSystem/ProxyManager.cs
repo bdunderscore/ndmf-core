@@ -33,6 +33,8 @@ namespace nadena.dev.ndmf.preview
         private static void OnPreCull(Camera cam)
         {
             ResetStates();
+
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
             
             var sess = PreviewSession.Current;
             if (sess == null) return;
