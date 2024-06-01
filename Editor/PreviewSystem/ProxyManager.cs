@@ -41,6 +41,13 @@ namespace nadena.dev.ndmf.preview
 
             foreach (var (original, replacement) in sess.GetReplacements())
             {
+                if (original == null || replacement == null || !original.enabled ||
+                    !original.gameObject.activeInHierarchy)
+                {
+                    if (replacement != null) replacement.forceRenderingOff = true;
+                    continue;
+                }
+                
                 _resetActions.Add((original, false));
                 _resetActions.Add((replacement, true));
 
