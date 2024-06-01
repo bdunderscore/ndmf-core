@@ -1,7 +1,7 @@
 {
   "name": "nadena.dev.ndmf.core",
   "displayName": "[NDMF] NDMF Core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "unity": "2021.1",
   "description": "Non-avatar-specific used by the Non-Destructive Modular Framework.",
   "vrchatVersion": "2022.1.1",
