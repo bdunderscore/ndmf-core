@@ -103,12 +103,14 @@ namespace nadena.dev.ndmf.rq.unity.editor
         private void EnableComponentMonitoring(ShadowGameObject obj)
         {
             if (obj.ComponentMonitoring) return;
-            obj.ComponentMonitoring = true;
-
+            
             foreach (Transform child in obj.GameObject.transform)
             {
                 EnableComponentMonitoring(child.gameObject);
             }
+
+            // Enable the parent last to avoid nuisance notifications
+            obj.ComponentMonitoring = true;
         }
 
         internal void EnablePathMonitoring(GameObject root)
@@ -138,12 +140,13 @@ namespace nadena.dev.ndmf.rq.unity.editor
                 var parent = targetObject.transform.parent?.gameObject;
                 if (parent == null)
                 {
-                    shadow.Parent = null;
+                    shadow.SetParent(null, false);
                     _rootSetListener.Fire(HierarchyEvent.ForceInvalidate);
                 }
                 else
                 {
-                    shadow.Parent = ActivateShadowObject(parent);
+                    // Don't fire notifications on initial creation
+                    shadow.SetParent(ActivateShadowObject(parent), false);
                 }
             }
 
@@ -211,6 +214,10 @@ namespace nadena.dev.ndmf.rq.unity.editor
             
             FireParentComponentChangeNotifications(shadow.Parent);
             if (shadow.PathMonitoring) FirePathChangeNotifications(shadow);
+
+            // Ensure the new parent is marked as dirty, in case this is a new object and we suppressed the dirty
+            // notifications.
+            if (shadow.Parent != null) shadow.Parent._listeners.Fire(HierarchyEvent.ObjectDirty);
             
             // Update parentage and refire
 
@@ -357,8 +364,11 @@ namespace nadena.dev.ndmf.rq.unity.editor
         {
             var obj = EditorUtility.InstanceIDToObject(instanceId) as GameObject;
             if (obj == null) return;
-            
-            ActivateShadowObject(obj);
+
+            var shadow = ActivateShadowObject(obj);
+
+            // Ensure the new parent is marked as dirty
+            if (shadow.Parent != null) shadow.Parent._listeners.Fire(HierarchyEvent.ObjectDirty);
         }
     }
 
@@ -400,23 +410,29 @@ namespace nadena.dev.ndmf.rq.unity.editor
             get => _parent;
             set
             {
-                if (value == _parent) return;
+                SetParent(value, true);
+            }
+        }
 
-                if (_parent != null)
-                {
-                    _parent._children.Remove(InstanceID);
-                    // Fire off a property change notification for the parent itself
-                    // TODO: tests
-                    _parent._listeners.Fire(HierarchyEvent.ObjectDirty);
-                }
 
-                _parent = value;
-                
-                if (_parent != null)
-                {
-                    _parent._children[InstanceID] = this;
-                    _parent._listeners.Fire(HierarchyEvent.ObjectDirty);
-                }
+        public void SetParent(ShadowGameObject parent, bool fireNotifications = true)
+        {
+            if (parent == _parent) return;
+
+            if (_parent != null)
+            {
+                _parent._children.Remove(InstanceID);
+                // Fire off a property change notification for the parent itself
+                // TODO: tests
+                if (fireNotifications) _parent._listeners.Fire(HierarchyEvent.ObjectDirty);
+            }
+
+            _parent = parent;
+
+            if (_parent != null)
+            {
+                _parent._children[InstanceID] = this;
+                if (fireNotifications) _parent._listeners.Fire(HierarchyEvent.ObjectDirty);
             }
         }
         
@@ -429,5 +445,6 @@ namespace nadena.dev.ndmf.rq.unity.editor
             Scene = gameObject.scene;
             IsActive = gameObject.activeSelf;
         }
+
     }
 }
