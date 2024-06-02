@@ -30,7 +30,7 @@ namespace nadena.dev.ndmf.preview
             MeshState state = Pipeline?.GetState(_originalRenderer);
             SkinnedMeshRenderer smr = null;
 
-            if (_replacementRenderer == null)
+            if (_replacementRenderer == null || _originalRenderer == null)
             {
                 Pipeline?.Invalidate();
                 return;
